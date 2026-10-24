@@ -1,0 +1,34 @@
+pluginManagement {
+    repositories {
+        maven { url = "https://maven.fabricmc.net/" }
+        maven { url = "https://maven.architectury.dev/" }
+        maven { url = "https://maven.minecraftforge.net/" }
+        maven { url = "https://maven.neoforged.net/releases/" }
+        gradlePluginPortal()
+        mavenCentral()
+    }
+}
+
+rootProject.name = "e4steam-Public-Servers-ports"
+
+include(
+        "registry-contract",
+        "registry-client",
+        "addon-common",
+        "test-support",
+        "addon-fabric-legacy17",
+        "addon-forge-legacy17",
+        "addon-fabric-classic",
+        "addon-forge-classic",
+        "addon-neoforge-classic"
+)
+
+project(":registry-contract").projectDir = file("../registry-contract")
+project(":registry-client").projectDir = file("../registry-client")
+project(":addon-common").projectDir = file("../addon-common")
+project(":test-support").projectDir = file("../test-support")
+project(":addon-fabric-legacy17").projectDir = file("../addon-fabric-legacy17")
+project(":addon-forge-legacy17").projectDir = file("../addon-forge-legacy17")
+project(":addon-fabric-classic").projectDir = file("../addon-fabric-classic")
+project(":addon-forge-classic").projectDir = file("../addon-forge-classic")
+project(":addon-neoforge-classic").projectDir = file("../addon-neoforge-classic")

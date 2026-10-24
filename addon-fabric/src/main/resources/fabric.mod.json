@@ -1,0 +1,36 @@
+{
+  "schemaVersion": 1,
+  "id": "e4steam_public_servers",
+  "version": "${version}",
+  "name": "e4steam Public Servers",
+  "icon": "assets/e4steam_public_servers/icon.png",
+  "description": "A privacy-safe catalog of public e4steam worlds and dedicated servers.",
+  "authors": ["Kamilchik", "K2 Studio"],
+  "contact": {
+    "homepage": "https://github.com/K2-Studio-Development",
+    "sources": "https://github.com/K2-Studio-Development/e4steam-Public-Servers",
+    "issues": "https://github.com/K2-Studio-Development/e4steam-Public-Servers/issues"
+  },
+  "license": "Apache-2.0",
+  "environment": "*",
+  "entrypoints": {
+    "client": [
+      "dev.k2studio.e4steam.publicservers.fabric.FabricPublicServersClient"
+    ],
+    "e4steam": [
+      "dev.k2studio.e4steam.publicservers.common.PublicServersAddon"
+    ]
+  },
+  "mixins": [
+    {
+      "config": "e4steam_public_servers.mixins.json",
+      "environment": "client"
+    }
+  ],
+  "depends": {
+    "fabricloader": ">=0.16.5",
+    "minecraft": ">=26.1- <26.4-",
+    "java": ">=25",
+    "e4steam": ">=0.3.2-beta.1"
+  }
+}

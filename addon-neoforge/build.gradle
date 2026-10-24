@@ -1,0 +1,132 @@
+plugins {
+    id "java-library"
+    id "net.neoforged.moddev"
+}
+
+base {
+    archivesName = "${rootProject.archives_base_name}-neoforge-mc26.1-26.3"
+}
+
+sourceSets {
+    main {
+        java {
+            // Minecraft 26.3 uses the same official names on both loaders. Keep one
+            // reviewed GUI implementation and exclude the Fabric-only entrypoint.
+            srcDir rootProject.file("addon-fabric/src/client/java")
+            exclude "dev/k2studio/e4steam/publicservers/fabric/**"
+        }
+        resources {
+            srcDir rootProject.file("addon-fabric/src/client/resources")
+        }
+    }
+}
+
+neoForge {
+    enable {
+        version = rootProject.neoforge_version
+        disableRecompilation = true
+    }
+    validateAccessTransformers = true
+
+    runs {
+        client { client() }
+        server { server() }
+    }
+
+    mods {
+        e4steam_public_servers {
+            sourceSet sourceSets.main
+        }
+    }
+}
+
+dependencies {
+    implementation project(":addon-common")
+    implementation project(":registry-client")
+    implementation project(":registry-contract")
+    compileOnly "io.github.kamilhik:e4steam-api:${rootProject.e4steam_api_version}"
+}
+
+def resourceVersion = project.version.toString()
+def resourceMinecraftVersion = rootProject.minecraft_version.toString()
+def resourceApiVersion = rootProject.e4steam_api_version.toString()
+
+processResources {
+    inputs.property "version", resourceVersion
+    inputs.property "minecraft_version", resourceMinecraftVersion
+    inputs.property "e4steam_api_version", resourceApiVersion
+    filesMatching("META-INF/neoforge.mods.toml") {
+        expand(
+                version: resourceVersion,
+                minecraft_version: resourceMinecraftVersion,
+                e4steam_api_version: resourceApiVersion
+        )
+    }
+}
+
+tasks.named("jar", Jar) {
+    dependsOn(
+            project(":addon-common").tasks.named("classes"),
+            project(":registry-client").tasks.named("classes"),
+            project(":registry-contract").tasks.named("classes")
+    )
+    from(project(":addon-common").sourceSets.main.output)
+    from(project(":registry-client").sourceSets.main.output)
+    from(project(":registry-contract").sourceSets.main.output)
+    from(rootProject.file("LICENSE")) {
+        rename { "LICENSE_e4steam-Public-Servers" }
+    }
+}
+
+def auditedJar = tasks.named("jar", Jar).flatMap { it.archiveFile }
+
+tasks.register("artifactAudit") {
+    group = "verification"
+    description = "Audits the distributable NeoForge Public Servers JAR."
+    dependsOn tasks.named("jar")
+    inputs.file(auditedJar)
+    doLast {
+        def archive = inputs.files.singleFile
+        def forbidden = []
+        def required = [
+                "META-INF/neoforge.mods.toml",
+                "META-INF/services/link.e4steam.api.addon.E4steamAddonEntrypoint",
+                "pack.mcmeta",
+                "e4steam_public_servers.mixins.json",
+                "assets/e4steam_public_servers/lang/en_us.json",
+                "assets/e4steam_public_servers/lang/ru_ru.json",
+                "LICENSE_e4steam-Public-Servers",
+                "dev/k2studio/e4steam/publicservers/common/PublicServersAddon.class",
+                "dev/k2studio/e4steam/publicservers/client/PublicServersScreen.class",
+                "dev/k2studio/e4steam/publicservers/neoforge/PublicServersNeoForge.class"
+        ] as Set
+        new java.util.zip.ZipFile(archive).withCloseable { zip ->
+            zip.entries().each { entry ->
+                String name = entry.name
+                required.remove(name)
+                if (name.startsWith("link/e4steam/api/")
+                        || name.startsWith("link/e4steam/internal/")
+                        || name.startsWith("com/codedisaster/")
+                        || name.startsWith("net/fabricmc/")
+                        || name.startsWith("assets/minecraft/")
+                        || name == "fabric.mod.json"
+                        || name.endsWith("/FabricPublicServersClient.class")
+                        || name.endsWith(".dll")
+                        || name.endsWith(".so")
+                        || name.endsWith(".dylib")
+                        || name.endsWith(".java")
+                        || name.matches(".*(?:Test|Tests)\\.class")) {
+                    forbidden.add(name)
+                }
+            }
+        }
+        if (!forbidden.isEmpty()) {
+            throw new GradleException("Forbidden entries in ${archive.name}: ${forbidden}")
+        }
+        if (!required.isEmpty()) {
+            throw new GradleException("Required entries missing from ${archive.name}: ${required}")
+        }
+    }
+}
+
+check.dependsOn tasks.named("artifactAudit")

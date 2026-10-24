@@ -1,0 +1,173 @@
+plugins {
+    id "base"
+    id "net.fabricmc.fabric-loom" version "${loom_version}" apply false
+    id "net.neoforged.moddev" version "${moddevgradle_version}" apply false
+}
+
+allprojects {
+    group = rootProject.maven_group
+    version = rootProject.mod_version
+
+    repositories {
+        mavenCentral()
+    }
+}
+
+subprojects {
+    plugins.withId("java") {
+        def java25Project = project.name in ["addon-fabric", "addon-neoforge", "registry-server"]
+        def bytecodeRelease = java25Project ? 25 : 16
+
+        java {
+            toolchain {
+                // JDK 17 can emit the Java 16 bytecode required by Minecraft
+                // 1.17 while the year-based 26.x modules require JDK 25.
+                languageVersion = JavaLanguageVersion.of(java25Project ? 25 : 17)
+            }
+            sourceCompatibility = JavaVersion.toVersion(bytecodeRelease)
+            targetCompatibility = JavaVersion.toVersion(bytecodeRelease)
+        }
+
+        tasks.withType(JavaCompile).configureEach {
+            options.encoding = "UTF-8"
+            options.release = bytecodeRelease
+            options.compilerArgs += ["-Xlint:all", "-Xlint:-processing"]
+        }
+
+        tasks.withType(Test).configureEach {
+            useJUnitPlatform()
+            systemProperty "file.encoding", "UTF-8"
+        }
+
+        tasks.withType(AbstractArchiveTask).configureEach {
+            preserveFileTimestamps = false
+            reproducibleFileOrder = true
+        }
+    }
+}
+
+tasks.register("verification") {
+    group = "verification"
+    description = "Runs unit, backend, loader and artifact checks without publishing."
+    dependsOn(
+            ":registry-contract:check",
+            ":registry-client:check",
+            ":registry-server:check",
+            ":addon-common:check",
+            ":addon-fabric:check",
+            ":addon-neoforge:check"
+    )
+}
+
+tasks.register("versionConsistency") {
+    group = "verification"
+    description = "Keeps addon source, modern build and portable build versions synchronized."
+    inputs.files(
+            file("gradle.properties"),
+            file("ports/gradle.properties"),
+            file("addon-common/src/main/java/dev/k2studio/e4steam/publicservers/common/PublicServersAddon.java")
+    )
+    doLast {
+        String expected = rootProject.mod_version.toString()
+        String portable = new Properties().with { values ->
+            file("ports/gradle.properties").withInputStream(values.&load)
+            values.getProperty("mod_version")
+        }
+        String source = file("addon-common/src/main/java/dev/k2studio/e4steam/publicservers/common/PublicServersAddon.java")
+                .getText("UTF-8")
+        if (portable != expected || !source.contains("VERSION = \"${expected}\"")) {
+            throw new GradleException(
+                    "Version mismatch: root=${expected}, ports=${portable}, descriptor source is stale")
+        }
+    }
+}
+
+tasks.named("verification") {
+    dependsOn tasks.named("versionConsistency")
+}
+
+tasks.register("portableVerification", GradleBuild) {
+    group = "verification"
+    description = "Builds and audits the Java 16/17 Fabric, Forge and NeoForge ports."
+    dir = file("ports")
+    tasks = ["verification"]
+}
+
+def releaseVersion = rootProject.mod_version.toString()
+def releaseDirectory = layout.buildDirectory.dir("release")
+
+tasks.register("releaseJars", Sync) {
+    group = "build"
+    description = "Collects all seven Addon API 1.1 runtime variants without publishing."
+    dependsOn(
+            tasks.named("verification"),
+            tasks.named("portableVerification"),
+            ":addon-fabric:jar",
+            ":addon-neoforge:jar"
+    )
+    into(releaseDirectory)
+    from("addon-fabric/build/libs/e4steam-public-servers-fabric-quilt-mc26.1-26.3-${releaseVersion}.jar")
+    from("addon-neoforge/build/libs/e4steam-public-servers-neoforge-mc26.1-26.3-${releaseVersion}.jar")
+    from("ports/build/modules/addon-fabric-legacy17/libs/e4steam-public-servers-fabric-quilt-mc1.17-1.18.2-${releaseVersion}.jar")
+    from("ports/build/modules/addon-forge-legacy17/libs/e4steam-public-servers-forge-mc1.17.1-1.18.1-${releaseVersion}.jar")
+    from("ports/build/modules/addon-fabric-classic/libs/e4steam-public-servers-fabric-quilt-mc1.19-1.21.11-${releaseVersion}.jar")
+    from("ports/build/modules/addon-forge-classic/libs/e4steam-public-servers-forge-mc1.18.2-1.20.2-${releaseVersion}.jar")
+    from("ports/build/modules/addon-neoforge-classic/libs/e4steam-public-servers-neoforge-mc1.20.2-1.21.11-${releaseVersion}.jar")
+}
+
+tasks.register("releaseArtifactAudit") {
+    group = "verification"
+    description = "Rejects missing, stale or duplicate files in the collected release directory."
+    dependsOn tasks.named("releaseJars")
+    inputs.dir(releaseDirectory)
+    doLast {
+        List<File> artifacts = fileTree(releaseDirectory).matching { include("*.jar") }
+                .files.toList().sort { it.name }
+        if (artifacts.size() != 7) {
+            throw new GradleException("Expected 7 modern addon JARs, found ${artifacts*.name}")
+        }
+        artifacts.each { artifact ->
+            if (!artifact.name.endsWith("-${releaseVersion}.jar") || artifact.length() < 10000L) {
+                throw new GradleException("Invalid release artifact: ${artifact.name}")
+            }
+            new java.util.zip.ZipFile(artifact).withCloseable { zip ->
+                def icon = zip.getEntry("assets/e4steam_public_servers/icon.png")
+                if (icon == null) throw new GradleException("Missing mod-list icon in ${artifact.name}")
+                def image = zip.getInputStream(icon).withCloseable { javax.imageio.ImageIO.read(it) }
+                if (image == null || image.width != 512 || image.height != 512) {
+                    throw new GradleException("Invalid mod-list icon in ${artifact.name}")
+                }
+                zip.entries().each { entry ->
+                    if (entry.name.contains("CatalogWebsite") || entry.name == "catalog-web.html") {
+                        throw new GradleException("Local website bundled in ${artifact.name}")
+                    }
+                    if (!entry.directory && entry.name.endsWith(".class")) {
+                        String constants = new String(zip.getInputStream(entry).bytes,
+                                java.nio.charset.StandardCharsets.ISO_8859_1)
+                        if (constants.contains("com/sun/net/httpserver") || constants.contains("e4steam-catalog-web")) {
+                            throw new GradleException("Local web listener bundled in ${artifact.name}")
+                        }
+                    }
+                }
+                def metadata = ["fabric.mod.json", "META-INF/mods.toml", "META-INF/neoforge.mods.toml"]
+                        .collect { zip.getEntry(it) }.findAll { it != null }
+                if (metadata.isEmpty() || metadata.any { entry ->
+                    !zip.getInputStream(entry).getText("UTF-8").contains("0.3.2-beta.1")
+                }) throw new GradleException("Stale core dependency in ${artifact.name}")
+                if (metadata.any { entry ->
+                    String value = zip.getInputStream(entry).getText("UTF-8")
+                    !value.contains("Kamilchik") || !value.contains("K2 Studio")
+                            || value.toLowerCase(java.util.Locale.ROOT).contains("codex")
+                }) throw new GradleException("Incorrect mod-list credits in ${artifact.name}")
+                metadata.findAll { it.name.endsWith(".toml") }.each { entry ->
+                    String value = zip.getInputStream(entry).getText("UTF-8")
+                    def logo = (value =~ /logoFile\s*=\s*"([^"]+)"/)
+                    if (!logo.find() || logo.group(1).contains("/") || zip.getEntry(logo.group(1)) == null) {
+                        throw new GradleException("Unsafe or missing Forge mod-list logo in ${artifact.name}")
+                    }
+                }
+            }
+            println("Release artifact: ${artifact.name} (${artifact.length()} bytes)")
+        }
+    }
+}

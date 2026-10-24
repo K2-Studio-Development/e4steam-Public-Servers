@@ -1,0 +1,74 @@
+plugins {
+    id "architectury-plugin"
+    id "dev.architectury.loom"
+}
+
+evaluationDependsOn(":registry-contract")
+evaluationDependsOn(":registry-client")
+evaluationDependsOn(":addon-common")
+
+architectury {
+    minecraft = "1.20.2"
+    platformSetupLoomIde()
+    fabric()
+}
+
+loom {
+    silentMojangMappingsLicense()
+}
+
+base {
+    archivesName = "${rootProject.archives_base_name}-fabric-quilt-mc1.19-1.21.11"
+}
+
+dependencies {
+    minecraft "com.mojang:minecraft:1.20.2"
+    mappings loom.officialMojangMappings()
+    modImplementation "net.fabricmc:fabric-loader:0.16.5"
+
+    implementation project(":addon-common")
+    implementation project(":registry-client")
+    implementation project(":registry-contract")
+    compileOnly "io.github.kamilhik:e4steam-api:${rootProject.e4steam_api_version}"
+}
+
+sourceSets.main {
+    java {
+        srcDir rootProject.file("../addon-portable/src/main/java")
+    }
+    resources {
+        srcDir rootProject.file("../addon-fabric/src/client/resources")
+        exclude "e4steam_public_servers.mixins.json"
+    }
+}
+
+processResources {
+    inputs.property "version", project.version
+    filesMatching("fabric.mod.json") {
+        expand(version: project.version)
+    }
+}
+
+tasks.named("jar", Jar) {
+    dependsOn(
+            project(":addon-common").tasks.named("classes"),
+            project(":registry-client").tasks.named("classes"),
+            project(":registry-contract").tasks.named("classes")
+    )
+    from(project(":addon-common").sourceSets.main.output)
+    from(project(":registry-client").sourceSets.main.output)
+    from(project(":registry-contract").sourceSets.main.output)
+    from(rootProject.file("../LICENSE")) { rename { "LICENSE_e4steam-Public-Servers" } }
+}
+
+tasks.register("artifactAudit") {
+    group = "verification"
+    dependsOn tasks.named("remapJar")
+    doLast {
+        rootProject.ext.auditAddonJar(
+                tasks.named("remapJar").get().archiveFile.get().asFile,
+                "fabric.mod.json", 61, "1.19-1.21.11")
+    }
+}
+
+check.dependsOn tasks.named("artifactAudit")

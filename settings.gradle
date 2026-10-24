@@ -1,0 +1,22 @@
+pluginManagement {
+    repositories {
+        maven { url = "https://maven.fabricmc.net/" }
+        maven { url = "https://maven.architectury.dev/" }
+        maven { url = "https://maven.minecraftforge.net/" }
+        maven { url = "https://maven.neoforged.net/releases/" }
+        gradlePluginPortal()
+        mavenCentral()
+    }
+}
+
+rootProject.name = "e4steam-Public-Servers"
+
+include(
+        "registry-contract",
+        "registry-client",
+        "registry-server",
+        "addon-common",
+        "addon-fabric",
+        "addon-neoforge",
+        "test-support"
+)

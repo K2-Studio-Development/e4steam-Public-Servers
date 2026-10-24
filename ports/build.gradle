@@ -1,0 +1,121 @@
+plugins {
+    id "base"
+    id "architectury-plugin" version "3.4.164" apply false
+    id "dev.architectury.loom" version "1.13.469" apply false
+}
+
+allprojects {
+    group = rootProject.maven_group
+    version = rootProject.mod_version
+    repositories {
+        mavenCentral()
+        maven { url = "https://maven.fabricmc.net/" }
+        maven { url = "https://maven.minecraftforge.net/" }
+        maven { url = "https://maven.neoforged.net/releases/" }
+    }
+}
+
+subprojects {
+    // These projects reuse source directories from the parent build. Keep all
+    // portable outputs under ports/build so nested GradleBuild execution can
+    // never race the Minecraft 26.x build for test or class files.
+    layout.buildDirectory = rootProject.layout.buildDirectory.dir("modules/${project.name}")
+
+    plugins.withId("java") {
+        def release = project.name.endsWith("legacy17") ? 16 :
+                (project.name.endsWith("classic") ? 17 : 16)
+        // Forge 1.18.2 publishes its development libraries with a Java 17
+        // Gradle variant even though e4steam's legacy runtime JAR is emitted
+        // as Java 16 bytecode for the 1.17 branch.
+        def dependencyLevel = project.name == "addon-forge-legacy17" ? 17 : release
+        java {
+            toolchain { languageVersion = JavaLanguageVersion.of(17) }
+            sourceCompatibility = JavaVersion.toVersion(dependencyLevel)
+            targetCompatibility = JavaVersion.toVersion(dependencyLevel)
+        }
+        tasks.withType(JavaCompile).configureEach {
+            options.encoding = "UTF-8"
+            options.release = release
+            options.compilerArgs += ["-Xlint:all", "-Xlint:-processing"]
+        }
+        tasks.withType(Test).configureEach {
+            useJUnitPlatform()
+            systemProperty "file.encoding", "UTF-8"
+        }
+        tasks.withType(AbstractArchiveTask).configureEach {
+            preserveFileTimestamps = false
+            reproducibleFileOrder = true
+        }
+    }
+}
+
+ext.auditAddonJar = { File archive, String metadataPath, int expectedMajor,
+                      String minecraftFamily ->
+    if (!archive.isFile()) {
+        throw new GradleException("Missing ${minecraftFamily} addon artifact: ${archive}")
+    }
+    Set<String> required = [
+            metadataPath,
+            "e4steam_public_servers.portable.mixins.json",
+            "assets/e4steam_public_servers/lang/en_us.json",
+            "assets/e4steam_public_servers/lang/ru_ru.json",
+            "dev/k2studio/e4steam/publicservers/common/PublicServersAddon.class",
+            "dev/k2studio/e4steam/publicservers/client/PublicServersScreen.class"
+    ] as Set
+    if (metadataPath != "fabric.mod.json") {
+        required.add("pack.mcmeta")
+    }
+    List<String> forbidden = []
+    new java.util.zip.ZipFile(archive).withCloseable { zip ->
+        zip.entries().each { entry ->
+            String name = entry.name
+            required.remove(name)
+            if (name.startsWith("link/e4steam/api/")
+                    || name.startsWith("link/e4steam/internal/")
+                    || name.startsWith("com/codedisaster/")
+                    || name.startsWith("assets/minecraft/")
+                    || name == "e4steam_public_servers.mixins.json"
+                    || name.endsWith(".dll") || name.endsWith(".so")
+                    || name.endsWith(".dylib") || name.endsWith(".java")
+                    || name.matches(".*(?:Test|Tests)\\.class")) {
+                forbidden.add(name)
+            }
+            if (name.endsWith(".class") && !entry.directory) {
+                byte[] header = zip.getInputStream(entry).withCloseable { it.readNBytes(8) }
+                int major = header.length == 8
+                        ? ((header[6] & 0xff) << 8) | (header[7] & 0xff) : Integer.MAX_VALUE
+                if (major > expectedMajor) {
+                    forbidden.add("${name} (class major ${major} > ${expectedMajor})")
+                }
+            }
+        }
+        String constants = zip.entries().findAll { !it.directory && it.name.endsWith(".class") }
+                .collect { entry -> new String(zip.getInputStream(entry).bytes,
+                        java.nio.charset.StandardCharsets.ISO_8859_1) }.join("\n")
+        ["GuiGraphicsExtractor", "MouseButtonEvent", "net/minecraft/resources/Identifier"]
+                .each { symbol ->
+                    if (constants.contains(symbol)) forbidden.add("direct new-GUI reference: ${symbol}")
+                }
+    }
+    if (!required.isEmpty()) {
+        throw new GradleException("Missing ${minecraftFamily} entries in ${archive.name}: ${required}")
+    }
+    if (!forbidden.isEmpty()) {
+        throw new GradleException("Forbidden ${minecraftFamily} entries in ${archive.name}: ${forbidden}")
+    }
+    println("Audited ${minecraftFamily}: ${archive.name}")
+}
+
+tasks.register("verification") {
+    group = "verification"
+    dependsOn(
+            ":registry-contract:check",
+            ":registry-client:check",
+            ":addon-common:check",
+            ":addon-fabric-legacy17:check",
+            ":addon-forge-legacy17:check",
+            ":addon-fabric-classic:check",
+            ":addon-forge-classic:check",
+            ":addon-neoforge-classic:check"
+    )
+}

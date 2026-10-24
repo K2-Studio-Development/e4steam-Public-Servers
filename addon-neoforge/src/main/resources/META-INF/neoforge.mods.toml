@@ -1,0 +1,38 @@
+license="Apache-2.0"
+issueTrackerURL="https://github.com/K2-Studio-Development/e4steam-Public-Servers/issues"
+
+[[mods]]
+modId="e4steam_public_servers"
+version="${version}"
+displayName="e4steam Public Servers"
+logoFile="icon.png"
+displayURL="https://github.com/K2-Studio-Development/e4steam-Public-Servers"
+authors="Kamilchik, K2 Studio"
+displayTest="MATCH_VERSION"
+description='''
+A privacy-safe catalog of public e4steam worlds and dedicated servers.
+'''
+
+[[mixins]]
+config="e4steam_public_servers.mixins.json"
+
+[[dependencies.e4steam_public_servers]]
+modId="neoforge"
+type="required"
+versionRange="*"
+ordering="NONE"
+side="BOTH"
+
+[[dependencies.e4steam_public_servers]]
+modId="minecraft"
+type="required"
+versionRange="[26.1,26.4)"
+ordering="NONE"
+side="BOTH"
+
+[[dependencies.e4steam_public_servers]]
+modId="e4steam"
+type="required"
+versionRange="[0.3.2-beta.1,)"
+ordering="AFTER"
+side="BOTH"

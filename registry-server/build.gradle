@@ -1,0 +1,25 @@
+plugins {
+    id "application"
+}
+
+dependencies {
+    implementation project(":registry-contract")
+    implementation "org.xerial:sqlite-jdbc:${rootProject.sqlite_version}"
+    testImplementation project(":test-support")
+    testImplementation platform("org.junit:junit-bom:${rootProject.junit_version}")
+    testImplementation "org.junit.jupiter:junit-jupiter"
+    testRuntimeOnly "org.junit.platform:junit-platform-launcher"
+}
+
+application {
+    mainClass = "dev.k2studio.e4steam.publicservers.registry.RegistryServerMain"
+}
+
+tasks.register("backendArtifact", Zip) {
+    group = "distribution"
+    dependsOn tasks.named("installDist")
+    archiveBaseName = "e4steam-public-servers-registry"
+    archiveVersion = rootProject.mod_version
+    destinationDirectory = layout.buildDirectory.dir("distributions")
+    from(layout.buildDirectory.dir("install/registry-server"))
+}

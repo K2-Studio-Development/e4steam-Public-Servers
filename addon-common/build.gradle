@@ -1,0 +1,14 @@
+plugins {
+    id "java-library"
+}
+
+dependencies {
+    api project(":registry-client")
+    compileOnly "io.github.kamilhik:e4steam-api:${rootProject.e4steam_api_version}"
+    testCompileOnly "io.github.kamilhik:e4steam-api:${rootProject.e4steam_api_version}"
+    testRuntimeOnly "io.github.kamilhik:e4steam-api:${rootProject.e4steam_api_version}"
+    testImplementation project(":test-support")
+    testImplementation platform("org.junit:junit-bom:${rootProject.junit_version}")
+    testImplementation "org.junit.jupiter:junit-jupiter"
+    testRuntimeOnly "org.junit.platform:junit-platform-launcher"
+}

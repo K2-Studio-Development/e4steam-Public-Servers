@@ -1,0 +1,66 @@
+plugins {
+    id "architectury-plugin"
+    id "dev.architectury.loom"
+}
+
+evaluationDependsOn(":registry-contract")
+evaluationDependsOn(":registry-client")
+evaluationDependsOn(":addon-common")
+
+architectury {
+    minecraft = "1.20.2"
+    platformSetupLoomIde()
+    neoForge()
+}
+
+loom { silentMojangMappingsLicense() }
+
+base {
+    archivesName = "${rootProject.archives_base_name}-neoforge-mc1.20.2-1.21.11"
+}
+
+dependencies {
+    minecraft "com.mojang:minecraft:1.20.2"
+    mappings loom.officialMojangMappings()
+    neoForge "net.neoforged:neoforge:20.2.88"
+    implementation project(":addon-common")
+    implementation project(":registry-client")
+    implementation project(":registry-contract")
+    compileOnly "io.github.kamilhik:e4steam-api:${rootProject.e4steam_api_version}"
+}
+
+sourceSets.main {
+    java {
+        srcDir rootProject.file("../addon-portable/src/main/java")
+        srcDir rootProject.file("../addon-portable/src/neoforge/java")
+        exclude "dev/k2studio/e4steam/publicservers/fabric/**"
+    }
+    resources {
+        srcDir rootProject.file("../addon-fabric/src/client/resources")
+        exclude "e4steam_public_servers.mixins.json"
+    }
+}
+
+processResources {
+    inputs.property "version", project.version
+    filesMatching("META-INF/mods.toml") { expand(version: project.version) }
+    filesMatching("META-INF/neoforge.mods.toml") { expand(version: project.version) }
+}
+
+tasks.named("jar", Jar) {
+    dependsOn(":addon-common:classes", ":registry-client:classes", ":registry-contract:classes")
+    from(project(":addon-common").sourceSets.main.output)
+    from(project(":registry-client").sourceSets.main.output)
+    from(project(":registry-contract").sourceSets.main.output)
+    from(rootProject.file("../LICENSE")) { rename { "LICENSE_e4steam-Public-Servers" } }
+}
+
+tasks.register("artifactAudit") {
+    group = "verification"
+    dependsOn tasks.named("remapJar")
+    doLast {
+        rootProject.ext.auditAddonJar(tasks.named("remapJar").get().archiveFile.get().asFile,
+                "META-INF/neoforge.mods.toml", 61, "NeoForge 1.20.2-1.21.11")
+    }
+}
+check.dependsOn tasks.named("artifactAudit")

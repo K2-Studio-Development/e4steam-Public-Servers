@@ -1,0 +1,12 @@
+.gradle/
+**/build/
+run/
+*.log
+*.db
+*.db-shm
+*.db-wal
+local-dev.properties
+registry-server/config/local/
+
+.gradle*/
+libs/*.jar
