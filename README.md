@@ -14,16 +14,6 @@
   <a href="https://discord.gg/zFvrHz2ys7" title="Discord K2 Studio"><img src="docs/assets/links/discord-labeled.svg" width="196" height="28" alt="Discord K2 Studio"></a>
   <a href="https://dalink.to/kamilchik1231" title="Поддержать разработку / Donate"><img src="docs/assets/links/donate-labeled.svg" width="178" height="28" alt="Поддержать разработку / Donate"></a>
 </p>
-<p align="center">
-  <a href="https://github.com/K2-Studio-Development/e4steam-Public-Servers" title="Public Servers source"><img src="docs/assets/links/source-labeled.svg" width="166" height="28" alt="GitHub Source"></a>
-</p>
-<p align="center">
-  <a href="https://www.curseforge.com/minecraft/mc-mods/e4steam" title="e4steam CurseForge"><img src="docs/assets/links/curseforge-labeled.svg" width="216" height="28" alt="e4steam CurseForge"></a>
-  <a href="https://github.com/Kamilhik/e4steam" title="e4steam GitHub"><img src="docs/assets/links/github-labeled.svg" width="178" height="28" alt="e4steam GitHub"></a>
-  <a href="https://github.com/K2-Studio-Development/e4steam-Friends" title="e4steam Friends"><img src="docs/assets/links/friends-labeled.svg" width="178" height="28" alt="e4steam Friends"></a>
-  <a href="https://modrinth.com/project/SqqdJF90" title="e4steam Modrinth"><img src="docs/assets/links/modrinth-labeled.svg" width="206" height="28" alt="e4steam Modrinth"></a>
-  <a href="https://youtu.be/KJ1W_eJ2VK4" title="Видео / Video"><img src="docs/assets/links/youtube-labeled.svg" width="184" height="28" alt="Видео / Video"></a>
-</p>
 
 <p align="center">
   <a href="https://github.com/K2-Studio-Development/e4steam-Public-Servers/releases">Скачать / Download</a> ·
