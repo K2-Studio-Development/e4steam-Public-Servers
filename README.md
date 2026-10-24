@@ -4,7 +4,7 @@
 
 <h1 align="center">e4steam Public Servers</h1>
 
-<p align="center">Найди открытый мир и присоединись к игре через Steam.<br>Find an open world and join through Steam.</p>
+<p align="center">Find an open world and join through Steam.<br>Найди открытый мир и присоединись к игре через Steam.</p>
 
 <p align="center"><b>Kamilchik · K2 Studio</b><br>Fabric · Quilt · Forge · NeoForge · Minecraft 1.17–26.3</p>
 
@@ -16,12 +16,69 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/K2-Studio-Development/e4steam-Public-Servers/releases">Скачать / Download</a> ·
-  <a href="#установка">Установка</a> ·
-  <a href="#совместимость">Версии</a> ·
-  <a href="#english">English</a> ·
-  <a href="https://github.com/K2-Studio-Development/e4steam-Public-Servers/issues">Сообщить об ошибке</a>
+  <a href="https://github.com/K2-Studio-Development/e4steam-Public-Servers/releases">Download / Скачать</a> ·
+  <a href="#install-and-play">Installation</a> ·
+  <a href="#compatibility">Compatibility</a> ·
+  <a href="#русский">Русский</a> ·
+  <a href="https://github.com/K2-Studio-Development/e4steam-Public-Servers/issues">Report an issue</a>
 </p>
+
+## English
+
+Public Servers adds a catalog of public e4steam worlds to Minecraft. A host opens a world to everyone; other players find it in the catalog and join through Steam. It does not need a separate website, domain or API key.
+
+Search by world name, filter for compatible versions or free slots, and check player counts before joining. Long lists support the mouse wheel and a draggable scrollbar. The scrollbar stays hidden when every row fits.
+
+The interface supports English and Russian, with compatible screens for older Minecraft releases.
+
+**Dedicated servers are not published through the Steam catalog yet.** The current catalog lists integrated player worlds; the dedicated-server tab may be empty.
+
+### Install and play
+
+Install a compatible e4steam 0.3.2-beta.1 or newer core with Addon API 1.1 and the matching Public Servers JAR on both computers. For beta.18, use an updated core build with the LAN and Steam fixes. Both players need a signed-in Steam client. The [compatibility table](#compatibility) lists loader and Java requirements; Minecraft or the loader may require a newer Java version than the addon's bytecode minimum.
+
+1. Download the core and addon JARs for your Minecraft version and loader, then place them in `mods`. Add the matching Fabric API or Quilted Fabric API when required.
+2. Host: open a singleplayer world, choose **Open to LAN**, set Steam access to **Public Server**, confirm publication and enter a name. The default name is `<host nickname> server`; the player limit includes the host.
+3. Guest: open Multiplayer, enter **Public Servers**, select the world and connect.
+
+The catalog refreshes every 10 seconds. Advertisements expire after 45 seconds without an update. Friends-only and invitation-only worlds stay out of the public list. e4steam handles Steam authentication and admission checks.
+
+
+### Compatibility
+
+| Minecraft | Loader | Java¹ |
+| --- | --- | ---: |
+| 1.17–1.18.2 | Fabric / Quilt | 16+ |
+| 1.17.1–1.18.1 | Forge | 16+ |
+| 1.19–1.21.11 | Fabric / Quilt | 17+ |
+| 1.18.2–1.20.2 | Forge | 17+ |
+| 1.20.2–1.21.11 | NeoForge | 17+ |
+| 26.1–26.3 | Fabric / Quilt | 25+ |
+| 26.1–26.3 | NeoForge | 25+ |
+
+¹ This is the minimum Java version for the addon bytecode. Minecraft and the loader may require a newer Java version, especially within the 1.19–1.21.11 range.
+
+<details>
+<summary>JAR filename guide</summary>
+
+The JAR filename contains the loader and Minecraft range. Look for one of these markers before the addon version:
+
+| Build | JAR filename marker |
+| --- | --- |
+| Fabric / Quilt 1.17–1.18.2 | `fabric-quilt-mc1.17-1.18.2` |
+| Forge 1.17.1–1.18.1 | `forge-mc1.17.1-1.18.1` |
+| Fabric / Quilt 1.19–1.21.11 | `fabric-quilt-mc1.19-1.21.11` |
+| Forge 1.18.2–1.20.2 | `forge-mc1.18.2-1.20.2` |
+| NeoForge 1.20.2–1.21.11 | `neoforge-mc1.20.2-1.21.11` |
+| Fabric / Quilt 26.1–26.3 | `fabric-quilt-mc26.1-26.3` |
+| NeoForge 26.1–26.3 | `neoforge-mc26.1-26.3` |
+
+</details>
+
+
+---
+
+## Русский
 
 ## Как это работает
 
@@ -82,25 +139,6 @@ Public Servers добавляет в Minecraft каталог общих мир�
 
 </details>
 
-## English
-
-Public Servers adds a catalog of public e4steam worlds to Minecraft. A host opens a world to everyone; other players find it in the catalog and join through Steam. It does not need a separate website, domain or API key.
-
-Search by world name, filter for compatible versions or free slots, and check player counts before joining. Long lists support the mouse wheel and a draggable scrollbar. The scrollbar stays hidden when every row fits.
-
-The interface supports English and Russian, with compatible screens for older Minecraft releases.
-
-**Dedicated servers are not published through the Steam catalog yet.** The current catalog lists integrated player worlds; the dedicated-server tab may be empty.
-
-### Install and play
-
-Install a compatible e4steam 0.3.2-beta.1 or newer core with Addon API 1.1 and the matching Public Servers JAR on both computers. For beta.18, use an updated core build with the LAN and Steam fixes. Both players need a signed-in Steam client. The [compatibility table](#совместимость) lists loader and Java requirements; Minecraft or the loader may require a newer Java version than the addon's bytecode minimum.
-
-1. Download the core and addon JARs for your Minecraft version and loader, then place them in `mods`. Add the matching Fabric API or Quilted Fabric API when required.
-2. Host: open a singleplayer world, choose **Open to LAN**, set Steam access to **Public Server**, confirm publication and enter a name. The default name is `<host nickname> server`; the player limit includes the host.
-3. Guest: open Multiplayer, enter **Public Servers**, select the world and connect.
-
-The catalog refreshes every 10 seconds. Advertisements expire after 45 seconds without an update. Friends-only and invitation-only worlds stay out of the public list. e4steam handles Steam authentication and admission checks.
 
 ## Для разработчиков / Development
 
