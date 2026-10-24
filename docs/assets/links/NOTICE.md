@@ -1,0 +1,1 @@
+Service icon paths: [Simple Icons](https://github.com/simple-icons/simple-icons), CC0-1.0. Brand names and logos belong to their respective owners. Link icon and button backgrounds are project assets.
