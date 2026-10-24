@@ -31,7 +31,7 @@ import java.util.Map;
 /** Loader-independent Addon API 1.1 entrypoint. */
 public final class PublicServersAddon implements E4steamAddonEntrypoint {
     public static final String ADDON_ID = "k2studio:e4steam_public_servers";
-    public static final String VERSION = "0.1.0-beta.18";
+    public static final String VERSION = "0.1.0";
     private static final System.Logger LOGGER =
             System.getLogger("e4steam Public Servers");
 

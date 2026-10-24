@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.1.0
+
+- Publish the public-world catalog as release 0.1.0 for all seven loader variants.
+- Include the catalog layout, scrolling, Steam publication and Forge mod-list fixes from beta testing.
+- Refresh bilingual documentation, credits and community links.
+
 ## 0.1.0-beta.18
 
 - Add a draggable scrollbar and mouse-wheel scrolling to the portable catalog; preserve existing 26.x scrolling and Steam connection behavior.

@@ -1,4 +1,4 @@
-# e4steam Public Servers 0.1.0-beta.18
+# e4steam Public Servers 0.1.0
 
 - Draggable scrollbar and wheel support in the portable public-world catalog.
 - Responsive full-window layout, dark background and correct rendering of wide buttons on old Forge releases.

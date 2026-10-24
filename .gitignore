@@ -10,3 +10,8 @@ registry-server/config/local/
 
 .gradle*/
 libs/*.jar
+
+# Local publishing credentials
+.env
+.env.*
+!.env.example
